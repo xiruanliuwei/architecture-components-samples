@@ -23,6 +23,8 @@ import com.android.example.paging.pagingwithnetwork.reddit.repository.RedditPost
 import com.android.example.paging.pagingwithnetwork.reddit.ui.RedditActivity
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
@@ -60,6 +62,10 @@ class MainActivity : AppCompatActivity() {
             trivialFun3().collect { i ->
                 Log.d("AAAA", "$i")
             }
+
+            for (i in trivialFun4()) {
+                Log.d("AAAA", "$i")
+            }
         }
     }
 
@@ -81,5 +87,17 @@ class MainActivity : AppCompatActivity() {
         for (i in 0..10) {
             emit(i)
         }
+    }
+
+    fun trivialFun4(): ReceiveChannel<Int> {
+        val ch = Channel<Int>()
+
+        GlobalScope.launch(Dispatchers.IO) {
+            for (i in 0..10) {
+                ch.send(1)
+            }
+        }
+
+        return ch
     }
 }
