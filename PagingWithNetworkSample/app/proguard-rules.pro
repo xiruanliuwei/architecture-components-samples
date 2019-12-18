@@ -22,7 +22,7 @@
 
 -dontpreverify
 # Uncomment this line if you need to debug.
-#-dontobfuscate
+-dontobfuscate
 -dontskipnonpubliclibraryclasses
 -verbose
 
