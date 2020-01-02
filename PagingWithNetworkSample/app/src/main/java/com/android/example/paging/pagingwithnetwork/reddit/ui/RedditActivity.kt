@@ -84,7 +84,7 @@ class RedditActivity : AppCompatActivity() {
         }
         list.adapter = adapter
         model.posts.observe(this, Observer<PagedList<RedditPost>> {
-            adapter.submitList(it) {
+            adapter.submitList(it, Runnable {
                 // Workaround for an issue where RecyclerView incorrectly uses the loading / spinner
                 // item added to the end of the list as an anchor during initial load.
                 val layoutManager = (list.layoutManager as LinearLayoutManager)
@@ -92,7 +92,7 @@ class RedditActivity : AppCompatActivity() {
                 if (position != RecyclerView.NO_POSITION) {
                     list.scrollToPosition(position)
                 }
-            }
+            })
         })
         model.networkState.observe(this, Observer {
             adapter.setNetworkState(it)
