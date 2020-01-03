@@ -17,10 +17,11 @@
 package com.android.example.paging.pagingwithnetwork.reddit.repository.inMemory.byItem
 
 import androidx.lifecycle.MutableLiveData
-import androidx.paging.DataSource
+import androidx.paging.PagedSource
+import androidx.paging.PagedSourceFactory
 import com.android.example.paging.pagingwithnetwork.reddit.api.RedditApi
 import com.android.example.paging.pagingwithnetwork.reddit.vo.RedditPost
-import java.util.concurrent.Executor
+import kotlinx.coroutines.CoroutineDispatcher
 
 /**
  * A simple data source factory which also provides a way to observe the last created data source.
@@ -30,10 +31,11 @@ import java.util.concurrent.Executor
 class SubRedditDataSourceFactory(
         private val redditApi: RedditApi,
         private val subredditName: String,
-        private val retryExecutor: Executor) : DataSource.Factory<String, RedditPost>() {
+        private val networkDispatcher: CoroutineDispatcher
+) : PagedSourceFactory<String, RedditPost> {
     val sourceLiveData = MutableLiveData<ItemKeyedSubredditDataSource>()
-    override fun create(): DataSource<String, RedditPost> {
-        val source = ItemKeyedSubredditDataSource(redditApi, subredditName, retryExecutor)
+    override fun invoke(): PagedSource<String, RedditPost> {
+        val source = ItemKeyedSubredditDataSource(redditApi, subredditName, networkDispatcher)
         sourceLiveData.postValue(source)
         return source
     }

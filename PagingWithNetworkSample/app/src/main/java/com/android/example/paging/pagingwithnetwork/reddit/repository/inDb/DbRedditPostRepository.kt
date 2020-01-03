@@ -27,9 +27,10 @@ import com.android.example.paging.pagingwithnetwork.reddit.repository.Listing
 import com.android.example.paging.pagingwithnetwork.reddit.repository.NetworkState
 import com.android.example.paging.pagingwithnetwork.reddit.repository.RedditPostRepository
 import com.android.example.paging.pagingwithnetwork.reddit.vo.RedditPost
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.launch
+import java.io.IOException
 import java.util.concurrent.Executor
 
 /**
@@ -72,27 +73,21 @@ class DbRedditPostRepository(
     private fun refresh(subredditName: String): LiveData<NetworkState> {
         val networkState = MutableLiveData<NetworkState>()
         networkState.value = NetworkState.LOADING
-        redditApi.getTop(subredditName, networkPageSize).enqueue(
-                object : Callback<RedditApi.ListingResponse> {
-                    override fun onFailure(call: Call<RedditApi.ListingResponse>, t: Throwable) {
-                        // retrofit calls this on main thread so safe to call set value
-                        networkState.value = NetworkState.error(t.message)
-                    }
 
-                    override fun onResponse(
-                            call: Call<RedditApi.ListingResponse>,
-                            response: Response<RedditApi.ListingResponse>) {
-                        ioExecutor.execute {
-                            db.runInTransaction {
-                                db.posts().deleteBySubreddit(subredditName)
-                                insertResultIntoDb(subredditName, response.body())
-                            }
-                            // since we are in bg thread now, post the result.
-                            networkState.postValue(NetworkState.LOADED)
-                        }
-                    }
+        // TODO: not GlobalScope
+        GlobalScope.launch(ioExecutor.asCoroutineDispatcher()) {
+            try {
+                val data = redditApi.getTop(subredditName, networkPageSize)
+                db.runInTransaction {
+                    db.posts().deleteBySubreddit(subredditName)
+                    insertResultIntoDb(subredditName, data)
                 }
-        )
+
+                networkState.postValue(NetworkState.LOADED)
+            } catch (e: IOException) {
+                networkState.postValue(NetworkState.error(e.message))
+            }
+        }
         return networkState
     }
 

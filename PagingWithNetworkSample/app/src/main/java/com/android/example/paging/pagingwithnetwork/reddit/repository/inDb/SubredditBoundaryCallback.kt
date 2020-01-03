@@ -16,15 +16,15 @@
 
 package com.android.example.paging.pagingwithnetwork.reddit.repository.inDb
 
+import androidx.annotation.MainThread
 import androidx.paging.PagedList
 import androidx.paging.PagingRequestHelper
-import androidx.annotation.MainThread
 import com.android.example.paging.pagingwithnetwork.reddit.api.RedditApi
 import com.android.example.paging.pagingwithnetwork.reddit.util.createStatusLiveData
 import com.android.example.paging.pagingwithnetwork.reddit.vo.RedditPost
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.launch
 import java.util.concurrent.Executor
 
 /**
@@ -51,10 +51,9 @@ class SubredditBoundaryCallback(
     @MainThread
     override fun onZeroItemsLoaded() {
         helper.runIfNotRunning(PagingRequestHelper.RequestType.INITIAL) {
-            webservice.getTop(
-                    subreddit = subredditName,
-                    limit = networkPageSize)
-                    .enqueue(createWebserviceCallback(it))
+            fetchNetworkAndWriteToDb(it) {
+                webservice.getTop(subreddit = subredditName, limit = networkPageSize)
+            }
         }
     }
 
@@ -64,11 +63,9 @@ class SubredditBoundaryCallback(
     @MainThread
     override fun onItemAtEndLoaded(itemAtEnd: RedditPost) {
         helper.runIfNotRunning(PagingRequestHelper.RequestType.AFTER) {
-            webservice.getTopAfter(
-                    subreddit = subredditName,
-                    after = itemAtEnd.name,
-                    limit = networkPageSize)
-                    .enqueue(createWebserviceCallback(it))
+            fetchNetworkAndWriteToDb(it) {
+                webservice.getTopAfter(subredditName, itemAtEnd.name, networkPageSize)
+            }
         }
     }
 
@@ -77,10 +74,11 @@ class SubredditBoundaryCallback(
      * paging library takes care of refreshing the list if necessary.
      */
     private fun insertItemsIntoDb(
-            response: Response<RedditApi.ListingResponse>,
-            it: PagingRequestHelper.Request.Callback) {
+            response: RedditApi.ListingResponse,
+            it: PagingRequestHelper.Request.Callback
+    ) {
         ioExecutor.execute {
-            handleResponse(subredditName, response.body())
+            handleResponse(subredditName, response)
             it.recordSuccess()
         }
     }
@@ -89,19 +87,16 @@ class SubredditBoundaryCallback(
         // ignored, since we only ever append to what's in the DB
     }
 
-    private fun createWebserviceCallback(it: PagingRequestHelper.Request.Callback)
-            : Callback<RedditApi.ListingResponse> {
-        return object : Callback<RedditApi.ListingResponse> {
-            override fun onFailure(
-                    call: Call<RedditApi.ListingResponse>,
-                    t: Throwable) {
-                it.recordFailure(t)
-            }
-
-            override fun onResponse(
-                    call: Call<RedditApi.ListingResponse>,
-                    response: Response<RedditApi.ListingResponse>) {
-                insertItemsIntoDb(response, it)
+    private fun fetchNetworkAndWriteToDb(
+            it: PagingRequestHelper.Request.Callback,
+            block: suspend () -> RedditApi.ListingResponse
+    ) {
+        // TODO: Not GlobalScope
+        GlobalScope.launch(ioExecutor.asCoroutineDispatcher()) {
+            try {
+                insertItemsIntoDb(block(), it)
+            } catch (e: Throwable) {
+                it.recordFailure(e)
             }
         }
     }
