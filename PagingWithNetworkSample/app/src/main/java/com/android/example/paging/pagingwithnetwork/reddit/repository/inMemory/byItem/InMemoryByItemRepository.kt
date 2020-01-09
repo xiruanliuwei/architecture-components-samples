@@ -59,7 +59,6 @@ class InMemoryByItemRepository(
         return Listing(
                 pagedData = pagedDataFlow.asLiveData(),
                 networkState = Transformations.switchMap(sourceLiveData) { it.networkState },
-                retry = {},
                 refresh = { sourceFactory.sourceLiveData.value?.invalidate() },
                 refreshState = refreshState
         )

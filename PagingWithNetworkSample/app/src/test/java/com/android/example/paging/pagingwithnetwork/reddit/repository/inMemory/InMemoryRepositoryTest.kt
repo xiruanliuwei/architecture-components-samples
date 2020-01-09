@@ -22,13 +22,13 @@ import androidx.paging.PagedList
 import com.android.example.paging.pagingwithnetwork.reddit.repository.Listing
 import com.android.example.paging.pagingwithnetwork.reddit.repository.NetworkState
 import com.android.example.paging.pagingwithnetwork.reddit.repository.RedditPostRepository
+import com.android.example.paging.pagingwithnetwork.reddit.repository.RedditPostRepository.Type.IN_MEMORY_BY_ITEM
+import com.android.example.paging.pagingwithnetwork.reddit.repository.RedditPostRepository.Type.IN_MEMORY_BY_PAGE
 import com.android.example.paging.pagingwithnetwork.reddit.repository.inMemory.byItem.InMemoryByItemRepository
 import com.android.example.paging.pagingwithnetwork.reddit.repository.inMemory.byPage.InMemoryByPageKeyRepository
 import com.android.example.paging.pagingwithnetwork.reddit.vo.RedditPost
 import com.android.example.paging.pagingwithnetwork.repository.FakeRedditApi
 import com.android.example.paging.pagingwithnetwork.repository.PostFactory
-import com.android.example.paging.pagingwithnetwork.reddit.repository.RedditPostRepository.Type.IN_MEMORY_BY_ITEM
-import com.android.example.paging.pagingwithnetwork.reddit.repository.RedditPostRepository.Type.IN_MEMORY_BY_PAGE
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.CoreMatchers.notNullValue
 import org.hamcrest.MatcherAssert.assertThat
@@ -40,18 +40,19 @@ import org.mockito.Mockito
 import java.util.concurrent.Executor
 
 @RunWith(Parameterized::class)
-class InMemoryRepositoryTest(type : RedditPostRepository.Type) {
+class InMemoryRepositoryTest(type: RedditPostRepository.Type) {
     companion object {
         @JvmStatic
         @Parameterized.Parameters(name = "{0}")
         fun params() = listOf(IN_MEMORY_BY_ITEM, IN_MEMORY_BY_PAGE)
     }
+
     @Suppress("unused")
     @get:Rule // used to make all live data calls sync
     val instantExecutor = InstantTaskExecutorRule()
     private val fakeApi = FakeRedditApi()
     private val networkExecutor = Executor { command -> command.run() }
-    private val repository = when(type) {
+    private val repository = when (type) {
         IN_MEMORY_BY_PAGE -> InMemoryByPageKeyRepository(
                 redditApi = fakeApi,
                 networkExecutor = networkExecutor)
@@ -117,54 +118,6 @@ class InMemoryRepositoryTest(type : RedditPostRepository.Type) {
     }
 
     /**
-     * asserts the retry logic when initial load request fails
-     */
-    @Test
-    fun retryInInitialLoad() {
-        fakeApi.addPost(postFactory.createRedditPost("foo"))
-        fakeApi.failureMsg = "xxx"
-        val listing = repository.postsOfSubreddit(subReddit = "foo", pageSize = 3)
-        // trigger load
-        val pagedList = getPagedList(listing)
-        assertThat(pagedList.size, `is`(0))
-
-        @Suppress("UNCHECKED_CAST")
-        val networkObserver = Mockito.mock(Observer::class.java) as Observer<NetworkState>
-        listing.networkState.observeForever(networkObserver)
-        fakeApi.failureMsg = null
-        listing.retry()
-        assertThat(pagedList.size, `is`(1 ))
-        assertThat(getNetworkState(listing), `is`(NetworkState.LOADED))
-        val inOrder = Mockito.inOrder(networkObserver)
-        inOrder.verify(networkObserver).onChanged(NetworkState.error("xxx"))
-        inOrder.verify(networkObserver).onChanged(NetworkState.LOADING)
-        inOrder.verify(networkObserver).onChanged(NetworkState.LOADED)
-        inOrder.verifyNoMoreInteractions()
-    }
-
-    /**
-     * asserts the retry logic when initial load succeeds but subsequent loads fails
-     */
-    @Test
-    fun retryAfterInitialFails() {
-        val posts = (0..10).map { postFactory.createRedditPost("bar") }
-        posts.forEach(fakeApi::addPost)
-        val listing = repository.postsOfSubreddit(subReddit = "bar", pageSize = 2)
-        val list = getPagedList(listing)
-        assertThat("test sanity, we should not load everything",
-                list.size < posts.size, `is`(true))
-        assertThat(getNetworkState(listing), `is`(NetworkState.LOADED))
-        fakeApi.failureMsg = "fail"
-        list.loadAllData()
-        assertThat(getNetworkState(listing), `is`(NetworkState.error("fail")))
-        fakeApi.failureMsg = null
-        listing.retry()
-        list.loadAllData()
-        assertThat(getNetworkState(listing), `is`(NetworkState.LOADED))
-        assertThat(list, `is`(posts))
-    }
-
-    /**
      * asserts refresh loads the new data
      */
     @Test
@@ -223,7 +176,7 @@ class InMemoryRepositoryTest(type : RedditPostRepository.Type) {
     /**
      * extract the latest network state from the listing
      */
-    private fun getNetworkState(listing: Listing<RedditPost>) : NetworkState? {
+    private fun getNetworkState(listing: Listing<RedditPost>): NetworkState? {
         val networkObserver = LoggingObserver<NetworkState>()
         listing.networkState.observeForever(networkObserver)
         return networkObserver.value
@@ -233,7 +186,7 @@ class InMemoryRepositoryTest(type : RedditPostRepository.Type) {
      * simple observer that logs the latest value it receives
      */
     private class LoggingObserver<T> : Observer<T> {
-        var value : T? = null
+        var value: T? = null
         override fun onChanged(t: T?) {
             this.value = t
         }

@@ -43,10 +43,5 @@ class SubRedditViewModel(private val repository: RedditPostRepository) : ViewMod
         return true
     }
 
-    fun retry() {
-        val listing = repoResult.value
-        listing?.retry?.invoke()
-    }
-
     fun currentSubreddit(): String? = subredditName.value
 }

@@ -54,7 +54,6 @@ class InMemoryByPageKeyRepository(
         return Listing(
                 pagedData = pagedDataFlow.asLiveData(),
                 networkState = switchMap(sourceFactory.sourceLiveData) { it.networkState },
-                retry = { },
                 refresh = { sourceFactory.sourceLiveData.value?.invalidate() },
                 refreshState = refreshState
         )

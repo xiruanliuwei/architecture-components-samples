@@ -122,7 +122,6 @@ class DbRedditPostRepository(
         return Listing(
                 pagedData = pagedDataFlow.asLiveData(),
                 networkState = boundaryCallback.networkState,
-                retry = { boundaryCallback.helper.retryAllFailed() },
                 refresh = { refreshTrigger.value = null },
                 refreshState = refreshState
         )
