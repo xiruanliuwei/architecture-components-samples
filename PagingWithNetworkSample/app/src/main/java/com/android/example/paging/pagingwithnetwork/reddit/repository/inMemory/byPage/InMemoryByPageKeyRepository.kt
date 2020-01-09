@@ -17,8 +17,10 @@
 package com.android.example.paging.pagingwithnetwork.reddit.repository.inMemory.byPage
 
 import androidx.lifecycle.Transformations
-import androidx.paging.LivePagedListBuilder
 import androidx.annotation.MainThread
+import androidx.lifecycle.asLiveData
+import androidx.paging.PagedDataFlowBuilder
+import androidx.paging.PagingConfig
 import androidx.paging.toLiveData
 import com.android.example.paging.pagingwithnetwork.reddit.api.RedditApi
 import com.android.example.paging.pagingwithnetwork.reddit.repository.Listing
@@ -36,18 +38,16 @@ class InMemoryByPageKeyRepository(private val redditApi: RedditApi,
     override fun postsOfSubreddit(subReddit: String, pageSize: Int): Listing<RedditPost> {
         val sourceFactory = SubRedditDataSourceFactory(redditApi, subReddit, networkExecutor)
 
-        // We use toLiveData Kotlin extension function here, you could also use LivePagedListBuilder
-        val livePagedList = sourceFactory.toLiveData(
-                pageSize = pageSize,
-                // provide custom executor for network requests, otherwise it will default to
-                // Arch Components' IO pool which is also used for disk access
-                fetchExecutor = networkExecutor)
+        val pagedDataFlow = PagedDataFlowBuilder(
+                dataSourceFactory = sourceFactory,
+                config = PagingConfig( pageSize = pageSize)
+        ).build()
 
         val refreshState = Transformations.switchMap(sourceFactory.sourceLiveData) {
             it.initialLoad
         }
         return Listing(
-                pagedList = livePagedList,
+                pagedData = pagedDataFlow.asLiveData(),
                 networkState = Transformations.switchMap(sourceFactory.sourceLiveData) {
                   it.networkState
                 },

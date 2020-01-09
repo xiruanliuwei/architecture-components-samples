@@ -41,7 +41,7 @@ versions.glide = "4.8.0"
 versions.hamcrest = "1.3"
 versions.junit = "4.12"
 versions.kotlin = "1.3.50"
-versions.lifecycle = "2.2.0-alpha03"
+versions.lifecycle = "2.3.0-SNAPSHOT"
 versions.mockito = "2.25.0"
 versions.mockito_all = "1.10.19"
 versions.mockito_android = "2.25.0"
@@ -189,6 +189,6 @@ def addRepos(RepositoryHandler handler) {
     handler.google()
     handler.jcenter()
     handler.maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
-    handler.maven { url 'https://ci.android.com/builds/submitted/6107054/androidx_snapshot/latest/repository' }
+    handler.maven { url 'https://ci.android.com/builds/submitted/6120389/androidx_snapshot/latest/repository' }
 }
 ext.addRepos = this.&addRepos

@@ -20,6 +20,7 @@ import androidx.paging.PagedListAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import android.view.ViewGroup
+import androidx.paging.PagedDataAdapter
 import com.android.example.lib.R
 import com.android.example.paging.pagingwithnetwork.GlideRequests
 import com.android.example.paging.pagingwithnetwork.reddit.repository.NetworkState
@@ -31,7 +32,7 @@ import com.android.example.paging.pagingwithnetwork.reddit.vo.RedditPost
 class PostsAdapter(
         private val glide: GlideRequests,
         private val retryCallback: () -> Unit)
-    : PagedListAdapter<RedditPost, RecyclerView.ViewHolder>(POST_COMPARATOR) {
+    : PagedDataAdapter<RedditPost, RecyclerView.ViewHolder>(POST_COMPARATOR) {
     private var networkState: NetworkState? = null
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (getItemViewType(position)) {

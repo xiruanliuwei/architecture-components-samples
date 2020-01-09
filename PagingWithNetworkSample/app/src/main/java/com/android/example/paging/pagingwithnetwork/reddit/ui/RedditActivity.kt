@@ -23,19 +23,14 @@ import android.view.KeyEvent
 import android.view.inputmethod.EditorInfo
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
-import androidx.paging.PagedList
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
+import androidx.lifecycle.*
 import com.android.example.paging.pagingwithnetwork.GlideApp
 import com.android.example.paging.pagingwithnetwork.R
 import com.android.example.paging.pagingwithnetwork.reddit.ServiceLocator
 import com.android.example.paging.pagingwithnetwork.reddit.repository.NetworkState
 import com.android.example.paging.pagingwithnetwork.reddit.repository.RedditPostRepository
-import com.android.example.paging.pagingwithnetwork.reddit.vo.RedditPost
 import kotlinx.android.synthetic.main.activity_reddit.*
+import kotlinx.coroutines.launch
 
 /**
  * A list activity that shows reddit posts in the given sub-reddit.
@@ -83,17 +78,10 @@ class RedditActivity : AppCompatActivity() {
             model.retry()
         }
         list.adapter = adapter
-        model.posts.observe(this, Observer<PagedList<RedditPost>> {
-            adapter.submitList(it, Runnable {
-                // Workaround for an issue where RecyclerView incorrectly uses the loading / spinner
-                // item added to the end of the list as an anchor during initial load.
-                val layoutManager = (list.layoutManager as LinearLayoutManager)
-                val position = layoutManager.findFirstCompletelyVisibleItemPosition()
-                if (position != RecyclerView.NO_POSITION) {
-                    list.scrollToPosition(position)
-                }
-            })
-        })
+        lifecycleScope.launch {
+            adapter.connect(model.posts.asFlow(), lifecycleScope)
+        }
+
         model.networkState.observe(this, Observer {
             adapter.setNetworkState(it)
         })
@@ -137,7 +125,8 @@ class RedditActivity : AppCompatActivity() {
             if (it.isNotEmpty()) {
                 if (model.showSubreddit(it)) {
                     list.scrollToPosition(0)
-                    (list.adapter as? PostsAdapter)?.submitList(null)
+                    // TODO: No API to clear list yet.
+                    //  (list.adapter as? PostsAdapter)?.submitList(null)
                 }
             }
         }

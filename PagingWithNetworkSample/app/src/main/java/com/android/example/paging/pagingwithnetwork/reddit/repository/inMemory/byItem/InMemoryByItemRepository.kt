@@ -16,12 +16,11 @@
 
 package com.android.example.paging.pagingwithnetwork.reddit.repository.inMemory.byItem
 
-import androidx.lifecycle.Transformations
-import androidx.paging.LivePagedListBuilder
-import androidx.paging.PagedList
 import androidx.annotation.MainThread
-import androidx.paging.Config
-import androidx.paging.toLiveData
+import androidx.lifecycle.Transformations
+import androidx.lifecycle.asLiveData
+import androidx.paging.PagedDataFlowBuilder
+import androidx.paging.PagingConfig
 import com.android.example.paging.pagingwithnetwork.reddit.api.RedditApi
 import com.android.example.paging.pagingwithnetwork.reddit.repository.Listing
 import com.android.example.paging.pagingwithnetwork.reddit.repository.RedditPostRepository
@@ -39,24 +38,22 @@ class InMemoryByItemRepository(
     override fun postsOfSubreddit(subReddit: String, pageSize: Int): Listing<RedditPost> {
         val sourceFactory = SubRedditDataSourceFactory(redditApi, subReddit, networkExecutor)
 
-        // We use toLiveData Kotlin ext. function here, you could also use LivePagedListBuilder
-        val livePagedList = sourceFactory.toLiveData(
-                // we use Config Kotlin ext. function here, could also use PagedList.Config.Builder
-                config = Config(
+        val pagedDataFlow = PagedDataFlowBuilder(
+                dataSourceFactory = sourceFactory,
+                config = PagingConfig(
                         pageSize = pageSize,
                         enablePlaceholders = false,
-                        initialLoadSizeHint = pageSize * 2),
-                // provide custom executor for network requests, otherwise it will default to
-                // Arch Components' IO pool which is also used for disk access
-                fetchExecutor = networkExecutor)
+                        initialLoadSize = pageSize * 2
+                )
+        ).build()
 
         val refreshState = Transformations.switchMap(sourceFactory.sourceLiveData) {
             it.initialLoad
         }
         return Listing(
-                pagedList = livePagedList,
+                pagedData = pagedDataFlow.asLiveData(),
                 networkState = Transformations.switchMap(sourceFactory.sourceLiveData) {
-                  it.networkState
+                    it.networkState
                 },
                 retry = {
                     sourceFactory.sourceLiveData.value?.retryAllFailed()
