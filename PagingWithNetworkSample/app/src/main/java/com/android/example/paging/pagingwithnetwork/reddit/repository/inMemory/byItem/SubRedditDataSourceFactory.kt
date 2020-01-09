@@ -18,7 +18,6 @@ package com.android.example.paging.pagingwithnetwork.reddit.repository.inMemory.
 
 import androidx.lifecycle.MutableLiveData
 import androidx.paging.PagedSource
-import androidx.paging.PagedSourceFactory
 import com.android.example.paging.pagingwithnetwork.reddit.api.RedditApi
 import com.android.example.paging.pagingwithnetwork.reddit.vo.RedditPost
 import kotlinx.coroutines.CoroutineDispatcher
@@ -32,7 +31,7 @@ class SubRedditDataSourceFactory(
         private val redditApi: RedditApi,
         private val subredditName: String,
         private val networkDispatcher: CoroutineDispatcher
-) : PagedSourceFactory<String, RedditPost> {
+) : () -> PagedSource<String, RedditPost> {
     val sourceLiveData = MutableLiveData<ItemKeyedSubredditDataSource>()
     override fun invoke(): PagedSource<String, RedditPost> {
         val source = ItemKeyedSubredditDataSource(redditApi, subredditName, networkDispatcher)

@@ -20,7 +20,9 @@ import androidx.annotation.MainThread
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations
-import androidx.paging.toLiveData
+import androidx.lifecycle.asLiveData
+import androidx.paging.PagedDataFlowBuilder
+import androidx.paging.PagingConfig
 import com.android.example.paging.pagingwithnetwork.reddit.api.RedditApi
 import com.android.example.paging.pagingwithnetwork.reddit.db.RedditDb
 import com.android.example.paging.pagingwithnetwork.reddit.repository.Listing
@@ -112,20 +114,16 @@ class DbRedditPostRepository(
             refresh(subReddit)
         }
 
-        // We use toLiveData Kotlin extension function here, you could also use LivePagedListBuilder
-        val livePagedList = db.posts().postsBySubreddit(subReddit).toLiveData(
-                pageSize = pageSize,
-                boundaryCallback = boundaryCallback)
+        val pagedDataFlow = PagedDataFlowBuilder(
+                dataSourceFactory = db.posts().postsBySubreddit(subReddit),
+                config = PagingConfig(pageSize)
+        ).build()
 
         return Listing(
-                pagedList = livePagedList,
+                pagedData = pagedDataFlow.asLiveData(),
                 networkState = boundaryCallback.networkState,
-                retry = {
-                    boundaryCallback.helper.retryAllFailed()
-                },
-                refresh = {
-                    refreshTrigger.value = null
-                },
+                retry = { boundaryCallback.helper.retryAllFailed() },
+                refresh = { refreshTrigger.value = null },
                 refreshState = refreshState
         )
     }

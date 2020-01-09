@@ -215,7 +215,7 @@ class InMemoryRepositoryTest(type : RedditPostRepository.Type) {
      */
     private fun getPagedList(listing: Listing<RedditPost>): PagedList<RedditPost> {
         val observer = LoggingObserver<PagedList<RedditPost>>()
-        listing.pagedList.observeForever(observer)
+        listing.pagedData.observeForever(observer)
         assertThat(observer.value, `is`(notNullValue()))
         return observer.value!!
     }

@@ -16,10 +16,10 @@
 
 package com.android.example.paging.pagingwithnetwork.reddit.ui
 
-import androidx.paging.PagedListAdapter
+import android.view.ViewGroup
+import androidx.paging.PagedDataAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
-import android.view.ViewGroup
 import com.android.example.lib.R
 import com.android.example.paging.pagingwithnetwork.GlideRequests
 import com.android.example.paging.pagingwithnetwork.reddit.repository.NetworkState
@@ -28,10 +28,8 @@ import com.android.example.paging.pagingwithnetwork.reddit.vo.RedditPost
 /**
  * A simple adapter implementation that shows Reddit posts.
  */
-class PostsAdapter(
-        private val glide: GlideRequests,
-        private val retryCallback: () -> Unit)
-    : PagedListAdapter<RedditPost, RecyclerView.ViewHolder>(POST_COMPARATOR) {
+class PostsAdapter(private val glide: GlideRequests)
+    : PagedDataAdapter<RedditPost, RecyclerView.ViewHolder>(POST_COMPARATOR) {
     private var networkState: NetworkState? = null
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (getItemViewType(position)) {
@@ -56,7 +54,7 @@ class PostsAdapter(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return when (viewType) {
             R.layout.reddit_post_item -> RedditPostViewHolder.create(parent, glide)
-            R.layout.network_state_item -> NetworkStateItemViewHolder.create(parent, retryCallback)
+            R.layout.network_state_item -> NetworkStateItemViewHolder.create(parent) { retry() }
             else -> throw IllegalArgumentException("unknown view type $viewType")
         }
     }

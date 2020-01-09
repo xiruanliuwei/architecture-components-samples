@@ -19,8 +19,9 @@ package com.android.example.paging.pagingwithnetwork.reddit.repository.inMemory.
 import androidx.annotation.MainThread
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations
-import androidx.paging.Config
-import androidx.paging.toLiveData
+import androidx.lifecycle.asLiveData
+import androidx.paging.PagedDataFlowBuilder
+import androidx.paging.PagingConfig
 import com.android.example.paging.pagingwithnetwork.reddit.api.RedditApi
 import com.android.example.paging.pagingwithnetwork.reddit.repository.Listing
 import com.android.example.paging.pagingwithnetwork.reddit.repository.RedditPostRepository
@@ -45,23 +46,19 @@ class InMemoryByItemRepository(
                 networkDispatcher = networkExecutor.asCoroutineDispatcher()
         )
 
-        // We use toLiveData Kotlin ext. function here, you could also use LivePagedListBuilder
-        val livePagedList = sourceFactory.toLiveData(
-                // We use Config Kotlin ext. function here, could also use PagedList.Config.Builder
-                Config(
+        val refreshState = Transformations.switchMap(sourceLiveData) { it.initialLoad }
+        val pagedDataFlow = PagedDataFlowBuilder(
+                pagedSourceFactory = sourceFactory,
+                config = PagingConfig(
                         pageSize = pageSize,
                         enablePlaceholders = false,
-                        initialLoadSizeHint = pageSize * 2
+                        initialLoadSize = pageSize * 2
                 )
-        )
-
-        val refreshState = Transformations.switchMap(sourceLiveData) { it.initialLoad }
+        ).build()
 
         return Listing(
-                pagedList = livePagedList,
-                networkState = Transformations.switchMap(sourceLiveData) {
-                    it.networkState
-                },
+                pagedData = pagedDataFlow.asLiveData(),
+                networkState = Transformations.switchMap(sourceLiveData) { it.networkState },
                 retry = {},
                 refresh = { sourceFactory.sourceLiveData.value?.invalidate() },
                 refreshState = refreshState

@@ -27,9 +27,9 @@ class SubRedditViewModel(private val repository: RedditPostRepository) : ViewMod
     private val repoResult = map(subredditName) {
         repository.postsOfSubreddit(it, 30)
     }
-    val posts = switchMap(repoResult, { it.pagedList })!!
-    val networkState = switchMap(repoResult, { it.networkState })!!
-    val refreshState = switchMap(repoResult, { it.refreshState })!!
+    val posts = switchMap(repoResult) { it.pagedData }
+    val networkState = switchMap(repoResult) { it.networkState }
+    val refreshState = switchMap(repoResult) { it.refreshState }
 
     fun refresh() {
         repoResult.value?.refresh?.invoke()
@@ -44,7 +44,7 @@ class SubRedditViewModel(private val repository: RedditPostRepository) : ViewMod
     }
 
     fun retry() {
-        val listing = repoResult?.value
+        val listing = repoResult.value
         listing?.retry?.invoke()
     }
 
