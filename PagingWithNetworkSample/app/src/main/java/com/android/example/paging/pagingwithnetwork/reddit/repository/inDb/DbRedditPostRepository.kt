@@ -21,8 +21,8 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations
 import androidx.lifecycle.asLiveData
-import androidx.paging.PagedDataFlowBuilder
 import androidx.paging.PagingConfig
+import androidx.paging.PagingDataFlow
 import com.android.example.paging.pagingwithnetwork.reddit.api.RedditApi
 import com.android.example.paging.pagingwithnetwork.reddit.db.RedditDb
 import com.android.example.paging.pagingwithnetwork.reddit.repository.Listing
@@ -114,15 +114,14 @@ class DbRedditPostRepository(
             refresh(subReddit)
         }
 
-        val pagedDataFlow = PagedDataFlowBuilder(
-                dataSourceFactory = db.posts().postsBySubreddit(subReddit),
-                config = PagingConfig(pageSize)
-        ).build()
+        val pagedDataFlow = PagingDataFlow(
+                config = PagingConfig(pageSize),
+                pagingSourceFactory = db.posts().postsBySubreddit(subReddit).asPagingSourceFactory()
+        )
 
         return Listing(
                 pagedData = pagedDataFlow.asLiveData(),
                 networkState = boundaryCallback.networkState,
-                refresh = { refreshTrigger.value = null },
                 refreshState = refreshState
         )
     }

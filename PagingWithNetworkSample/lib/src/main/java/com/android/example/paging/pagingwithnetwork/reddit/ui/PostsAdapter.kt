@@ -17,7 +17,7 @@
 package com.android.example.paging.pagingwithnetwork.reddit.ui
 
 import android.view.ViewGroup
-import androidx.paging.PagedDataAdapter
+import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.android.example.lib.R
@@ -29,7 +29,7 @@ import com.android.example.paging.pagingwithnetwork.reddit.vo.RedditPost
  * A simple adapter implementation that shows Reddit posts.
  */
 class PostsAdapter(private val glide: GlideRequests)
-    : PagedDataAdapter<RedditPost, RecyclerView.ViewHolder>(POST_COMPARATOR) {
+    : PagingDataAdapter<RedditPost, RecyclerView.ViewHolder>(POST_COMPARATOR) {
     private var networkState: NetworkState? = null
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (getItemViewType(position)) {

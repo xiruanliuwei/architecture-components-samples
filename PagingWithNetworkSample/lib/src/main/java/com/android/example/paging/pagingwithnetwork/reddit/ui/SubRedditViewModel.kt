@@ -31,10 +31,6 @@ class SubRedditViewModel(private val repository: RedditPostRepository) : ViewMod
     val networkState = switchMap(repoResult) { it.networkState }
     val refreshState = switchMap(repoResult) { it.refreshState }
 
-    fun refresh() {
-        repoResult.value?.refresh?.invoke()
-    }
-
     fun showSubreddit(subreddit: String): Boolean {
         if (subredditName.value == subreddit) {
             return false

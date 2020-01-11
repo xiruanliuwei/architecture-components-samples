@@ -20,8 +20,8 @@ import androidx.annotation.MainThread
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations
 import androidx.lifecycle.asLiveData
-import androidx.paging.PagedDataFlowBuilder
 import androidx.paging.PagingConfig
+import androidx.paging.PagingDataFlow
 import com.android.example.paging.pagingwithnetwork.reddit.api.RedditApi
 import com.android.example.paging.pagingwithnetwork.reddit.repository.Listing
 import com.android.example.paging.pagingwithnetwork.reddit.repository.RedditPostRepository
@@ -47,19 +47,18 @@ class InMemoryByItemRepository(
         )
 
         val refreshState = Transformations.switchMap(sourceLiveData) { it.initialLoad }
-        val pagedDataFlow = PagedDataFlowBuilder(
-                pagedSourceFactory = sourceFactory,
+        val pagedDataFlow = PagingDataFlow(
                 config = PagingConfig(
                         pageSize = pageSize,
                         enablePlaceholders = false,
                         initialLoadSize = pageSize * 2
-                )
-        ).build()
+                ),
+                pagingSourceFactory = sourceFactory
+        )
 
         return Listing(
                 pagedData = pagedDataFlow.asLiveData(),
                 networkState = Transformations.switchMap(sourceLiveData) { it.networkState },
-                refresh = { sourceFactory.sourceLiveData.value?.invalidate() },
                 refreshState = refreshState
         )
     }

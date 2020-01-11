@@ -18,8 +18,8 @@ package com.android.example.paging.pagingwithnetwork.reddit.repository.inMemory.
 
 import androidx.lifecycle.MutableLiveData
 import androidx.paging.LoadType.*
-import androidx.paging.PagedSource
-import androidx.paging.PagedSource.LoadResult.Page
+import androidx.paging.PagingSource
+import androidx.paging.PagingSource.LoadResult.Page
 import com.android.example.paging.pagingwithnetwork.reddit.api.RedditApi
 import com.android.example.paging.pagingwithnetwork.reddit.repository.NetworkState
 import com.android.example.paging.pagingwithnetwork.reddit.vo.RedditPost
@@ -39,7 +39,7 @@ class ItemKeyedSubredditDataSource(
         private val redditApi: RedditApi,
         private val subredditName: String,
         private val networkDispatcher: CoroutineDispatcher
-) : PagedSource<String, RedditPost>() {
+) : PagingSource<String, RedditPost>() {
     /**
      * There is no sync on the state because paging will always call loadInitial first then wait
      * for it to return some success value before calling loadAfter and we don't support loadBefore

@@ -17,7 +17,7 @@
 package com.android.example.paging.pagingwithnetwork.reddit.repository
 
 import androidx.lifecycle.LiveData
-import androidx.paging.PagedData
+import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -25,12 +25,10 @@ import kotlinx.coroutines.flow.Flow
  */
 data class Listing<T : Any>(
         // the LiveData of paged lists for the UI to observe
-        val pagedData: LiveData<PagedData<T>>,
+        val pagedData: LiveData<PagingData<T>>,
         // represents the network request status to show to the user
         val networkState: LiveData<NetworkState>,
         // represents the refresh status to show to the user. Separate from networkState, this
         // value is importantly only when refresh is requested.
-        val refreshState: LiveData<NetworkState>,
-        // refreshes the whole data and fetches it from scratch.
-        val refresh: () -> Unit
+        val refreshState: LiveData<NetworkState>
 )

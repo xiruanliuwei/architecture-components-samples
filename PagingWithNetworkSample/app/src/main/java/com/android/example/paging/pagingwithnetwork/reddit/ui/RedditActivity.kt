@@ -24,12 +24,14 @@ import android.view.inputmethod.EditorInfo
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.*
+import androidx.paging.PagingData
 import com.android.example.paging.pagingwithnetwork.GlideApp
 import com.android.example.paging.pagingwithnetwork.R
 import com.android.example.paging.pagingwithnetwork.reddit.ServiceLocator
 import com.android.example.paging.pagingwithnetwork.reddit.repository.NetworkState
 import com.android.example.paging.pagingwithnetwork.reddit.repository.RedditPostRepository
 import kotlinx.android.synthetic.main.activity_reddit.*
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 /**
@@ -77,7 +79,9 @@ class RedditActivity : AppCompatActivity() {
         val adapter = PostsAdapter(glide)
         list.adapter = adapter
         lifecycleScope.launch {
-            adapter.connect(model.posts.asFlow(), lifecycleScope)
+            model.posts.asFlow().collect {
+                adapter.collectFrom(it)
+            }
         }
 
         model.networkState.observe(this, Observer {
@@ -90,7 +94,7 @@ class RedditActivity : AppCompatActivity() {
             swipe_refresh.isRefreshing = it == NetworkState.LOADING
         })
         swipe_refresh.setOnRefreshListener {
-            model.refresh()
+            (list.adapter as? PostsAdapter)?.refresh()
         }
     }
 
@@ -120,11 +124,10 @@ class RedditActivity : AppCompatActivity() {
 
     private fun updatedSubredditFromInput() {
         input.text.trim().toString().let {
-            if (it.isNotEmpty()) {
-                if (model.showSubreddit(it)) {
-                    list.scrollToPosition(0)
-                    // TODO: No API to clear list yet.
-                    //  (list.adapter as? PostsAdapter)?.submitList(null)
+            if (it.isNotEmpty() && model.showSubreddit(it)) {
+                list.scrollToPosition(0)
+                lifecycleScope.launch {
+                    (list.adapter as? PostsAdapter)?.collectFrom(PagingData(emptyList()))
                 }
             }
         }
