@@ -29,7 +29,6 @@ class SubRedditViewModel(private val repository: RedditPostRepository) : ViewMod
     }
     val posts = switchMap(repoResult) { it.pagedData }
     val networkState = switchMap(repoResult) { it.networkState }
-    val refreshState = switchMap(repoResult) { it.refreshState }
 
     fun showSubreddit(subreddit: String): Boolean {
         if (subredditName.value == subreddit) {
