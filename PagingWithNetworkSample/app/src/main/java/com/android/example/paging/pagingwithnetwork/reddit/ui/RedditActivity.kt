@@ -127,7 +127,7 @@ class RedditActivity : AppCompatActivity() {
             if (it.isNotEmpty() && model.showSubreddit(it)) {
                 list.scrollToPosition(0)
                 lifecycleScope.launch {
-                    (list.adapter as? PostsAdapter)?.collectFrom(PagingData(emptyList()))
+                    (list.adapter as? PostsAdapter)?.collectFrom(PagingData.empty())
                 }
             }
         }
